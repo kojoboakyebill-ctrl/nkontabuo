@@ -5,10 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nkontabuo</title>
 <style>
-body{font-family:sans-serif;padding:20px;background:#f5f5f5}
-.container{max-width:400px;margin:auto;background:white;padding:20px;border-radius:12px}
-.btn-green{background:#16a34a;color:white;padding:12px;width:100%;border:none;border-radius:8px;font-size:16px;margin:10px 0}
-.transaction{border-bottom:1px solid #eee;padding:10px 0}
+body{font-family:sans-serif;padding:20px;background:#f5f5f5;margin:0}
+.container{max-width:400px;margin:auto;background:white;padding:20px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+.btn-green{background:#16a34a;color:white;padding:14px;width:100%;border:none;border-radius:8px;font-size:16px;margin:12px 0;cursor:pointer}
+.btn-green:active{background:#15803d}
+.transaction{border-bottom:1px solid #eee;padding:12px 0;font-size:14px}
+.tx-amount{font-weight:bold;color:#dc2626}
+.tx-date{color:#666;font-size:12px}
+.empty{color:#666;text-align:center;padding:20px}
+h1{margin:0 0 8px 0}
 </style>
 </head>
 <body>
@@ -18,17 +23,38 @@ body{font-family:sans-serif;padding:20px;background:#f5f5f5}
 <button id="smsBtn" class="btn-green">Connect MoMo SMS</button>
 <label><input type="checkbox" id="autoSync"> Auto Sync SMS</label>
 <h3>Transactions</h3>
-<div id="transactions"></div>
+<div id="transactions"><div class="empty">No transactions yet</div></div>
 </div>
 <script>
-document.getElementById('smsBtn').onclick=()=>{
-if(window.Android){window.Android.requestSmsPermission()}else{
-alert('This will read SMS on Android. Adding demo transaction.');
-let d=document.createElement('div');
-d.className='transaction';
-d.innerHTML='<strong>MTN MoMo</strong><br>GHS 50.00 - Sent to Kofi';
-document.getElementById('transactions').prepend(d);
-}};
+const btn = document.getElementById('smsBtn');
+const list = document.getElementById('transactions');
+const auto = document.getElementById('autoSync');
+
+function addTx(msg, amount, date){
+  if(list.querySelector('.empty')) list.innerHTML = '';
+  let d = document.createElement('div');
+  d.className = 'transaction';
+  d.innerHTML = `<strong>MoMo</strong><br><span class="tx-amount">GHS ${amount}</span> - ${msg}<br><span class="tx-date">${date}</span>`;
+  list.prepend(d);
+}
+
+// Called from Android app after SMS is read
+window.loadSms = function(json){
+  const sms = JSON.parse(json);
+  sms.forEach(s => addTx(s.body, s.amount, s.date));
+  btn.textContent = 'SMS Connected ✓';
+  btn.style.background = '#059669';
+}
+
+btn.onclick = () => {
+  if(window.Android){
+    window.Android.requestSmsPermission(); // Android app handles this
+  } else {
+    // Browser demo mode
+    alert('Install the Android app to read real MoMo SMS');
+    addTx('Sent to Kofi', '50.00', new Date().toLocaleString());
+  }
+};
 </script>
 </body>
 </html>
